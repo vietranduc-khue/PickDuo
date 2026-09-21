@@ -1,0 +1,46 @@
+workflows:
+  default-workflow:
+    name: Build Android and iOS (PickDuo Official)
+    max_build_duration: 15
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Set up local configurations
+        script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then
+            cd "$PROJECT_ROOT"
+          fi
+          if [ -f "android/gradlew" ]; then
+            chmod +x android/gradlew
+          fi
+      - name: Force Clean App Build Target
+        script: |
+          flutter clean
+      - name: Force Reconstruct Missing Platforms
+        script: |
+          flutter create --platforms=android,ios .
+      - name: Force Rewrite App Names
+        script: |
+          perl -pi -e 's/android:label=".*?"/android:label="PickDuo"/g' android/app/src/main/AndroidManifest.xml
+          perl -pi -e 's/<string>shooter<\/string>/<string>PickDuo<\/string>/g' ios/Runner/Info.plist
+      - name: Fetch Clean Dependencies
+        script: |
+          flutter pub get
+      - name: Force Delete Old Assets Cache
+        script: |
+          rm -rf android/app/src/main/res/mipmap-*
+      - name: Force Generate Brand Launcher Icons
+        script: |
+          dart run flutter_launcher_icons
+      - name: Build Android Release App Bundle
+        script: |
+          flutter build appbundle --release
+      - name: Build iOS App for Testing
+        script: |
+          flutter build ios --release --no-codesign
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+      - build/ios/iphoneos/*.app

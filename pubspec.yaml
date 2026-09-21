@@ -1,0 +1,32 @@
+name: pick_duo
+description: A sorting game with physics-based seesaw mechanics built using Flame and Forge2D.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.18.0
+  flame_audio: ^2.1.0
+  shared_preferences: ^2.2.2
+  games_services: ^5.1.0
+  in_app_purchase: ^3.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  assets:
+    - assets/
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/pickduo.png"
+  remove_alpha: ios
