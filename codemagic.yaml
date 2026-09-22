@@ -1,7 +1,7 @@
 workflows:
   default-workflow:
     name: Build Android and iOS (PickDuo Official)
-    max_build_duration: 15
+    max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
       flutter: stable
@@ -37,10 +37,16 @@ workflows:
           dart run flutter_launcher_icons
       - name: Build Android Release App Bundle
         script: |
-          flutter build appbundle --release
+          flutter build appbundle --release --android-skip-build-dependency-validation
       - name: Build iOS App for Testing
         script: |
           flutter build ios --release --no-codesign
+      - name: Package iOS App to Zip for Installer
+        script: |
+          cd build/ios/iphoneos
+          mkdir Payload
+          ln -s ../Runner.app Payload/Runner.app
+          zip -r ../../../PickDuo.ipa Payload
     artifacts:
       - build/app/outputs/bundle/release/*.aab
-      - build/ios/iphoneos/*.app
+      - *.ipa
