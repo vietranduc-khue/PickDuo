@@ -1,55 +1,47 @@
-import java.util.Properties
-import java.io.FileInputStream
-
-val keystorePropertiesFile = rootProject.file("key.properties")
-val keystoreProperties = Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-}
-
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("dev.flutter.flutter-gradle-plugin")
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
 }
 
 android {
-    namespace = "com.vthypercasual.pickduo"
-    compileSdk = flutter.compileSdkVersion
+    namespace "com.vthypercasual.pickduo"
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String? ?: ""
-            keyPassword = keystoreProperties["keyPassword"] as String? ?: ""
-            storeFile = if (keystoreProperties["storeFile"] != null) {
-                file(keystoreProperties["storeFile"] as String)
-            } else {
-                null
+        release {
+            def keystorePropertiesFile = rootProject.file('key.properties')
+            if (keystorePropertiesFile.exists()) {
+                def keystoreProperties = new Properties()
+                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+                storeFile = file(keystoreProperties['storeFile'])
+                storePassword = keystoreProperties['storePassword']
+                keyAlias = keystoreProperties['keyAlias']
+                keyPassword = keystoreProperties['keyPassword']
             }
-            storePassword = keystoreProperties["storePassword"] as String? ?: ""
         }
     }
 
     buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
-            
-            isMinifyEnabled = true
-            isShrinkResources = true
-            
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+        release {
+            signingConfig signingConfigs.release
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
 }
 
 flutter {
-    source = "../.."
+    source '../..'
 }
