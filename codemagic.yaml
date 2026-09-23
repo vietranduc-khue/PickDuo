@@ -25,7 +25,9 @@ workflows:
             exit 1
           fi
           echo $CM_KEYSTORE | base64 --decode > /tmp/upload-keystore.jks
-          cat >> android/key.properties <<EOF
+          
+          # Tao file key.properties de ép Android dung chu ky này khi build release
+          cat > android/key.properties <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD
           keyPassword=$CM_KEY_PASSWORD
           keyAlias=$CM_KEY_ALIAS
