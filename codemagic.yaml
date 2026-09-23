@@ -18,6 +18,19 @@ workflows:
           if [ -f "android/gradlew" ]; then
             chmod +x android/gradlew
           fi
+      - name: Set up Android Code Signing
+        script: |
+          if [ -z "$CM_KEYSTORE" ]; then
+            echo "Error: Keystore encoding not found. Make sure the Environment Group matches."
+            exit 1
+          fi
+          echo $CM_KEYSTORE | base64 --decode > /tmp/upload-keystore.jks
+          cat >> android/key.properties <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=/tmp/upload-keystore.jks
+          EOF
       - name: Force Clean App Build Target
         script: |
           flutter clean
