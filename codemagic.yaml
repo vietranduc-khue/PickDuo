@@ -9,24 +9,24 @@ workflows:
       flutter: stable
       xcode: latest
     scripts:
-      - name: Set up local configurations
+      - name: Set up Android Code Signing and Configurations
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then
             cd "$PROJECT_ROOT"
           fi
+          
           if [ -f "android/gradlew" ]; then
             chmod +x android/gradlew
           fi
-      - name: Set up Android Code Signing
-        script: |
+          
           if [ -z "$CM_KEYSTORE" ]; then
             echo "Error: Keystore encoding not found. Make sure the Environment Group matches."
             exit 1
           fi
+          
           echo $CM_KEYSTORE | base64 --decode > /tmp/upload-keystore.jks
           
-          # Tao file key.properties de ép Android dung chu ky này khi build release
           cat > android/key.properties <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD
           keyPassword=$CM_KEY_PASSWORD
@@ -35,28 +35,44 @@ workflows:
           EOF
       - name: Force Clean App Build Target
         script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter clean
       - name: Force Reconstruct Missing Platforms
         script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter create --platforms=android,ios .
       - name: Fetch Clean Dependencies
         script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter pub get
       - name: Force Rewrite App Names
         script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           perl -pi -e 's/android:label=".*?"/android:label="PickDuo"/g' android/app/src/main/AndroidManifest.xml
           perl -pi -e 's/<string>shooter<\/string>/<string>PickDuo<\/string>/g' ios/Runner/Info.plist
       - name: Force Delete Old Assets Cache
         script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           rm -rf android/app/src/main/res/mipmap-*
       - name: Force Generate Brand Launcher Icons
         script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           dart run flutter_launcher_icons
       - name: Build Android Release App Bundle
         script: |
-          flutter build appbundle --release
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+          flutter build appbundle --release --build-name=1.0.0 --build-number=1
       - name: Build iOS App for Testing
         script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter build ios --release --no-codesign
     artifacts:
       - build/app/outputs/bundle/release/*.aab

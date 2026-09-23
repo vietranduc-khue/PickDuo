@@ -1,3 +1,7 @@
+import java.io.FileInputStream
+import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -14,17 +18,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
     signingConfigs {
         create("release") {
             val keystorePropertiesFile = rootProject.file("key.properties")
             if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = java.util.Properties()
-                keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
-                storeFile = file(keystoreProperties["storeFile"] as String)
+                val keystoreProperties = Properties()
+                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+                
+                val storeFilePath = keystoreProperties["storeFile"] as String
+                storeFile = if (storeFilePath.startsWith("/")) {
+                    file(storeFilePath)
+                } else {
+                    rootProject.file(storeFilePath)
+                }
+                
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
@@ -35,10 +42,16 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            shrinkResources = false
-            minifyEnabled = false
+            isShrinkResources = false
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 
