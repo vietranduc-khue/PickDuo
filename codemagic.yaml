@@ -1,9 +1,11 @@
 workflows:
   default-workflow:
     name: Build Android and iOS (PickDuo Official)
-    max_build_duration: 30
+    max_build_duration: 15
     instance_type: mac_mini_m1
     environment:
+      groups:
+        - pickduo_keystore
       flutter: stable
       xcode: latest
     scripts:
@@ -22,13 +24,13 @@ workflows:
       - name: Force Reconstruct Missing Platforms
         script: |
           flutter create --platforms=android,ios .
+      - name: Fetch Clean Dependencies
+        script: |
+          flutter pub get
       - name: Force Rewrite App Names
         script: |
           perl -pi -e 's/android:label=".*?"/android:label="PickDuo"/g' android/app/src/main/AndroidManifest.xml
           perl -pi -e 's/<string>shooter<\/string>/<string>PickDuo<\/string>/g' ios/Runner/Info.plist
-      - name: Fetch Clean Dependencies
-        script: |
-          flutter pub get
       - name: Force Delete Old Assets Cache
         script: |
           rm -rf android/app/src/main/res/mipmap-*
@@ -37,16 +39,10 @@ workflows:
           dart run flutter_launcher_icons
       - name: Build Android Release App Bundle
         script: |
-          flutter build appbundle --release --android-skip-build-dependency-validation
+          flutter build appbundle --release
       - name: Build iOS App for Testing
         script: |
           flutter build ios --release --no-codesign
-      - name: Package iOS App to Zip for Installer
-        script: |
-          cd build/ios/iphoneos
-          mkdir Payload
-          ln -s ../Runner.app Payload/Runner.app
-          zip -r ../../../PickDuo.ipa Payload
     artifacts:
       - build/app/outputs/bundle/release/*.aab
-      - *.ipa
+      - build/ios/iphoneos/*.app
