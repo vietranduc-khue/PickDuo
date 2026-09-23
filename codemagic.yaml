@@ -6,15 +6,27 @@ workflows:
     environment:
       groups:
         - pickduo_keystore
+      vars:
+        CM_KEYSTORE_PASSWORD: "PickDuo2026"
+        CM_KEY_PASSWORD: "PickDuo2026"
+        CM_KEY_ALIAS: "upload"
       flutter: stable
       xcode: latest
     scripts:
+      - name: Force Clean App Build Target
+        script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+          flutter clean
+      - name: Force Reconstruct Missing Platforms
+        script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+          flutter create --platforms=android,ios .
       - name: Set up Android Code Signing and Configurations
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then
-            cd "$PROJECT_ROOT"
-          fi
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           
           if [ -f "android/gradlew" ]; then
             chmod +x android/gradlew
@@ -33,16 +45,6 @@ workflows:
           keyAlias=$CM_KEY_ALIAS
           storeFile=/tmp/upload-keystore.jks
           EOF
-      - name: Force Clean App Build Target
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter clean
-      - name: Force Reconstruct Missing Platforms
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter create --platforms=android,ios .
       - name: Fetch Clean Dependencies
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
