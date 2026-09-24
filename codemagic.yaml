@@ -6,11 +6,8 @@ workflows:
     environment:
       groups:
         - pickduo_keystore
-      vars:
-        CM_KEYSTORE_PATH: "/tmp/keystore.keystore"
-        CM_KEYSTORE_PASSWORD: "PickDuo2026"
-        CM_KEY_PASSWORD: "PickDuo2026"
-        CM_KEY_ALIAS: "upload"
+      android_signing:
+        - upload_keystore_ref
       flutter: stable
       xcode: latest
     scripts:
@@ -24,29 +21,7 @@ workflows:
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter create --platforms=android,ios .
-      - name: Generate keystore file
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          
-          if [ -f "android/gradlew" ]; then
-            chmod +x android/gradlew
-          fi
-          
-          if [ -z "$CM_KEYSTORE" ]; then
-            echo "Error: Keystore encoding not found. Make sure the Environment Group matches."
-            exit 1
-          fi
-          
-          echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
-          
-          cat > android/key.properties <<EOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          storeFile=$CM_KEYSTORE_PATH
-          EOF
-      - name: Inject Release Signing Logic to Gradle
+      - name: Inject System CI Signing Logic to Gradle
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
@@ -58,14 +33,8 @@ workflows:
               id("dev.flutter.flutter-gradle-plugin")
           }
           
-          var keystoreProperties = java.util.Properties()
-          var keystorePropertiesFile = rootProject.file("key.properties")
-          if (keystorePropertiesFile.exists()) {
-              keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
-          }
-          
           android {
-              namespace = "com.example.pickduo"
+              namespace = "com.vthypercasual.pickduo"
               compileSdk = flutter.compileSdkVersion
           
               compileOptions {
@@ -78,7 +47,7 @@ workflows:
               }
           
               defaultConfig {
-                  applicationId = "com.example.pickduo"
+                  applicationId = "com.vthypercasual.pickduo"
                   minSdk = flutter.minSdkVersion
                   targetSdk = flutter.targetSdkVersion
                   versionCode = flutter.versionCode
@@ -87,10 +56,12 @@ workflows:
           
               signingConfigs {
                   create("release") {
-                      keyAlias = keystoreProperties["keyAlias"] as String
-                      keyPassword = keystoreProperties["keyPassword"] as String
-                      storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
-                      storePassword = keystoreProperties["storePassword"] as String
+                      if (System.getenv()["CI"] != null) {
+                          storeFile = file(System.getenv()["CM_KEYSTORE_PATH"] ?: "")
+                          storePassword = System.getenv()["CM_KEYSTORE_PASSWORD"] ?: ""
+                          keyAlias = System.getenv()["CM_KEY_ALIAS"] ?: ""
+                          keyPassword = System.getenv()["CM_KEY_PASSWORD"] ?: ""
+                      }
                   }
               }
           
