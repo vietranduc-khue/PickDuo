@@ -6,8 +6,10 @@ workflows:
     environment:
       groups:
         - pickduo_keystore
-      android_signing:
-        - upload_keystore_ref
+      vars:
+        CM_KEYSTORE_PASSWORD: "PickDuo2026"
+        CM_KEY_PASSWORD: "PickDuo2026"
+        CM_KEY_ALIAS: "upload"
       flutter: stable
       xcode: latest
     scripts:
@@ -21,7 +23,24 @@ workflows:
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter create --platforms=android,ios .
-      - name: Inject System CI Signing Logic to Gradle
+      - name: Set up Android Code Signing File
+        script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+          
+          if [ -f "android/gradlew" ]; then
+            chmod +x android/gradlew
+          fi
+          
+          echo $CM_KEYSTORE | base64 --decode > android/app/upload-keystore.jks
+          
+          cat > android/key.properties <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+      - name: Inject Release Signing Logic to Gradle
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
@@ -31,6 +50,12 @@ workflows:
               id("com.android.application")
               id("kotlin-android")
               id("dev.flutter.flutter-gradle-plugin")
+          }
+          
+          var keystoreProperties = java.util.Properties()
+          var keystorePropertiesFile = rootProject.file("key.properties")
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
           }
           
           android {
@@ -56,12 +81,10 @@ workflows:
           
               signingConfigs {
                   create("release") {
-                      if (System.getenv()["CI"] != null) {
-                          storeFile = file(System.getenv()["CM_KEYSTORE_PATH"] ?: "")
-                          storePassword = System.getenv()["CM_KEYSTORE_PASSWORD"] ?: ""
-                          keyAlias = System.getenv()["CM_KEY_ALIAS"] ?: ""
-                          keyPassword = System.getenv()["CM_KEY_PASSWORD"] ?: ""
-                      }
+                      keyAlias = keystoreProperties["keyAlias"] as String
+                      keyPassword = keystoreProperties["keyPassword"] as String
+                      storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
+                      storePassword = keystoreProperties["storePassword"] as String
                   }
               }
           
