@@ -40,7 +40,7 @@ workflows:
           keyAlias=$CM_KEY_ALIAS
           storeFile=upload-keystore.jks
           EOF
-      - name: Inject Release Signing Logic to Gradle
+      - name: Inject Complete Release Signing Logic to Gradle
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
@@ -50,12 +50,6 @@ workflows:
               id("com.android.application")
               id("kotlin-android")
               id("dev.flutter.flutter-gradle-plugin")
-          }
-          
-          var keystoreProperties = java.util.Properties()
-          var keystorePropertiesFile = rootProject.file("key.properties")
-          if (keystorePropertiesFile.exists()) {
-              keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
           }
           
           android {
@@ -81,10 +75,15 @@ workflows:
           
               signingConfigs {
                   create("release") {
-                      keyAlias = keystoreProperties["keyAlias"] as String
-                      keyPassword = keystoreProperties["keyPassword"] as String
-                      storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
-                      storePassword = keystoreProperties["storePassword"] as String
+                      val keystorePropertiesFile = rootProject.file("key.properties")
+                      val keystoreProperties = java.util.Properties()
+                      if (keystorePropertiesFile.exists()) {
+                          keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+                          keyAlias = keystoreProperties["keyAlias"] as String
+                          keyPassword = keystoreProperties["keyPassword"] as String
+                          storeFile = file("upload-keystore.jks")
+                          storePassword = keystoreProperties["storePassword"] as String
+                      }
                   }
               }
           
