@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:in_app_purchase/in_app_purchase';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 class IAPManager {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
@@ -14,7 +14,7 @@ class IAPManager {
     }, onDone: () {
       _subscription.cancel();
     }, onError: (error) {
-      print(error);
+      // Logic handling error
     });
   }
 

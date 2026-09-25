@@ -1,142 +1,42 @@
-workflows:
-  default-workflow:
-    name: Build Android and iOS (PickDuo Official)
-    max_build_duration: 15
-    instance_type: mac_mini_m1
-    environment:
-      groups:
-        - pickduo_keystore
-      vars:
-        CM_KEYSTORE_PASSWORD: "PickDuo2026"
-        CM_KEY_PASSWORD: "PickDuo2026"
-        CM_KEY_ALIAS: "upload"
-      flutter: stable
-      xcode: latest
-    scripts:
-      - name: Force Clean App Build Target
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter clean
-      - name: Force Reconstruct Missing Platforms
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter create --platforms=android,ios .
-      - name: Inject Release Signing Logic to Gradle
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          
-          cat > android/app/build.gradle.kts << 'EOF'
-          plugins {
-              id("com.android.application")
-              id("kotlin-android")
-              id("dev.flutter.flutter-gradle-plugin")
-          }
-          
-          var keystoreProperties = java.util.Properties()
-          var keystorePropertiesFile = rootProject.file("key.properties")
-          if (keystorePropertiesFile.exists()) {
-              keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
-          }
-          
-          android {
-              namespace = "com.example.pickduo"
-              compileSdk = flutter.compileSdkVersion
-          
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }
-          
-              kotlinOptions {
-                  jvmTarget = "17"
-              }
-          
-              defaultConfig {
-                  applicationId = "com.example.pickduo"
-                  minSdk = flutter.minSdkVersion
-                  targetSdk = flutter.targetSdkVersion
-                  versionCode = flutter.versionCode
-                  versionName = flutter.versionName
-              }
-          
-              signingConfigs {
-                  create("release") {
-                      keyAlias = keystoreProperties["keyAlias"] as String
-                      keyPassword = keystoreProperties["keyPassword"] as String
-                      storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
-                      storePassword = keystoreProperties["storePassword"] as String
-                  }
-              }
-          
-              buildTypes {
-                  release {
-                      signingConfig = signingConfigs.getByName("release")
-                      isMinifyEnabled = false
-                      isShrinkResources = false
-                  }
-              }
-          }
-          
-          flutter {
-              source = "../.."
-          }
-          EOF
-      - name: Set up Android Code Signing and Configurations
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          
-          if [ -f "android/gradlew" ]; then
-            chmod +x android/gradlew
-          fi
-          
-          if [ -z "$CM_KEYSTORE" ]; then
-            echo "Error: Keystore encoding not found. Make sure the Environment Group matches."
-            exit 1
-          fi
-          
-          echo $CM_KEYSTORE | base64 --decode > /tmp/upload-keystore.jks
-          
-          cat > android/key.properties <<EOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          storeFile=/tmp/upload-keystore.jks
-          EOF
-      - name: Fetch Clean Dependencies
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter pub get
-      - name: Force Rewrite App Names
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          perl -pi -e 's/android:label=".*?"/android:label="PickDuo"/g' android/app/src/main/AndroidManifest.xml
-          perl -pi -e 's/<string>shooter<\/string>/<string>PickDuo<\/string>/g' ios/Runner/Info.plist
-      - name: Force Delete Old Assets Cache
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          rm -rf android/app/src/main/res/mipmap-*
-      - name: Force Generate Brand Launcher Icons
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          dart run flutter_launcher_icons
-      - name: Build Android Release App Bundle
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter build appbundle --release --build-name=1.0.0 --build-number=1
-      - name: Build iOS App for Testing
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter build ios --release --no-codesign
-    artifacts:
-      - build/app/outputs/bundle/release/*.aab
-      - build/ios/iphoneos/*.app
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const PickDuoApp());
+}
+
+class PickDuoApp extends StatelessWidget {
+  const PickDuoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'PickDuo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const MainGameScreen(),
+    );
+  }
+}
+
+class MainGameScreen extends StatefulWidget {
+  const MainGameScreen({super.key});
+
+  @override
+  State<MainGameScreen> createState() => _MainGameScreenState();
+}
+
+class _MainGameScreenState extends State<MainGameScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text(
+          'PickDuo Game Running',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+}

@@ -115,7 +115,7 @@ workflows:
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter build appbundle --release --build-name=1.0.0 --build-number=1
+          flutter build appbundle --release --no-pub --dart-define=dart.vm.product=true
       - name: Build iOS App for Testing
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)

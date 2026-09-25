@@ -18,6 +18,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    defaultConfig {
+        applicationId = "com.vthypercasual.pickduo"
+        minSdk = 21
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
     signingConfigs {
         create("release") {
             val keystorePropertiesFile = rootProject.file("key.properties")
