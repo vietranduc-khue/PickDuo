@@ -10,6 +10,8 @@ workflows:
         CM_KEYSTORE_PASSWORD: "PickDuo2026"
         CM_KEY_PASSWORD: "PickDuo2026"
         CM_KEY_ALIAS: "upload"
+        FLUTTER_SUPPRESS_ANALYTICS: "true"
+        FLUTTER_GRADLE_PLUGIN_MODIFY_BUILD_FILES: "false"
       flutter: stable
       xcode: latest
     scripts:
