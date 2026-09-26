@@ -23,6 +23,7 @@ workflows:
           fi
           
           echo $CM_KEYSTORE | base64 --decode > android/app/upload-keystore.jks
+          echo $CM_KEYSTORE | base64 --decode > android/upload-keystore.jks
           
           cat > android/key.properties <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD
