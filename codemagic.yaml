@@ -28,26 +28,44 @@ workflows:
           keyAlias=$CM_KEY_ALIAS
           storeFile=upload-keystore.jks
           EOF
-      - name: Build Android Release App Bundle
+      - name: Fetch Dependencies
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          
-          flutter clean
           flutter pub get
-          flutter build appbundle --release --no-pub
-      - name: Verify Android AAB
+      - name: Diagnose and Build Android AAB
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          
-          echo "=== AAB FILES ==="
-          find build -type f -name "*.aab" -print
+
+          echo "===== FLUTTER ====="
+          flutter --version
+
+          echo "===== JAVA ====="
+          java -version
+
+          echo "===== GRADLE ====="
+          cd android
+          ./gradlew --version
+
+          echo "===== BUILD ====="
+          set +e
+          ./gradlew bundleRelease --stacktrace --info
+          GRADLE_EXIT=$?
+
+          cd ..
+
+          echo "===== GRADLE EXIT CODE: $GRADLE_EXIT ====="
+          echo "===== AAB FILES ====="
+          find . -type f -name "*.aab" -print
+
+          exit $GRADLE_EXIT
       - name: Build iOS App for Testing
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter build ios --release --no-codesign
     artifacts:
-      - build/app/outputs/bundle/release/*.aab
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
       - build/ios/iphoneos/*.app
