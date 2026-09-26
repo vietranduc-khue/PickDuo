@@ -10,8 +10,8 @@ workflows:
         CM_KEYSTORE_PASSWORD: "PickDuo2026"
         CM_KEY_PASSWORD: "PickDuo2026"
         CM_KEY_ALIAS: "upload"
-      flutter: stable
-      xcode: latest
+    flutter: stable
+    xcode: latest
     scripts:
       - name: Set up Android Code Signing File
         script: |
@@ -22,8 +22,7 @@ workflows:
             chmod +x android/gradlew
           fi
           
-          echo $CM_KEYSTORE | base64 --decode > android/app/upload-keystore.jks
-          echo $CM_KEYSTORE | base64 --decode > android/upload-keystore.jks
+          echo "$CM_KEYSTORE" | base64 --decode > android/upload-keystore.jks
           
           cat > android/key.properties <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD
@@ -31,22 +30,21 @@ workflows:
           keyAlias=$CM_KEY_ALIAS
           storeFile=upload-keystore.jks
           EOF
-      - name: Fetch Clean Dependencies
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter pub get
-      - name: Force Rewrite App Names
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          perl -pi -e 's/android:label=".*?"/android:label="PickDuo"/g' android/app/src/main/AndroidManifest.xml
-          perl -pi -e 's/<string>shooter<\/string>/<string>PickDuo<\/string>/g' ios/Runner/Info.plist
       - name: Build Android Release App Bundle
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter build appbundle --release --no-pub --dart-define=dart.vm.product=true
+          
+          flutter clean
+          flutter pub get
+          flutter build appbundle --release --no-pub
+      - name: Verify Android AAB
+        script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+          
+          echo "=== AAB FILES ==="
+          find build -type f -name "*.aab" -print
       - name: Build iOS App for Testing
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
