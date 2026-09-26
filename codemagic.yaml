@@ -10,8 +10,6 @@ workflows:
         CM_KEYSTORE_PASSWORD: "PickDuo2026"
         CM_KEY_PASSWORD: "PickDuo2026"
         CM_KEY_ALIAS: "upload"
-    flutter: stable
-    xcode: latest
     scripts:
       - name: Set up Android Code Signing File
         script: |
