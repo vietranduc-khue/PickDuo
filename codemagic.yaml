@@ -66,6 +66,6 @@ workflows:
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter build ios --release --no-codesign
     artifacts:
-      - build/**/outputs/**/*.aab
-      - build/**/outputs/**/mapping.txt
+      - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/mapping.txt
       - build/ios/iphoneos/*.app
