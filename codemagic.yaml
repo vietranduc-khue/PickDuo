@@ -64,18 +64,16 @@ workflows:
       - android/app/build/outputs/**/*.aab
       - android/app/build/outputs/**/mapping.txt
 
-  ios-workflow:
+   ios-workflow:
     name: PickDuo Build iOS & TestFlight
     max_build_duration: 60
     instance_type: mac_mini_m1
-    integrations:
-      app_store_connect: vthypercasualgames
     environment:
       groups:
-        - apple_credentials
+        - pickduo_apple_keystore
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: PickDuo - com.vthypercasualgames.pickduo
+        bundle_identifier: com.vthypercasualgames.pickduo
       flutter: stable
       xcode: latest
     scripts:
