@@ -10,29 +10,32 @@ workflows:
         CM_KEYSTORE_PASSWORD: "PickDuo2026"
         CM_KEY_PASSWORD: "PickDuo2026"
         CM_KEY_ALIAS: "upload"
+
     scripts:
       - name: Set up Android Code Signing File
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          
+
           if [ -f "android/gradlew" ]; then
             chmod +x android/gradlew
           fi
-          
+
           echo "$CM_KEYSTORE" | base64 --decode > android/upload-keystore.jks
-          
+
           cat > android/key.properties <<EOF
           storePassword=$CM_KEYSTORE_PASSWORD
           keyPassword=$CM_KEY_PASSWORD
           keyAlias=$CM_KEY_ALIAS
           storeFile=upload-keystore.jks
           EOF
+
       - name: Fetch Dependencies
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter pub get
+
       - name: Diagnose and Build Android AAB
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
@@ -60,11 +63,12 @@ workflows:
           find . -type f -name "*.aab" -print
 
           exit $GRADLE_EXIT
+
     artifacts:
       - android/app/build/outputs/**/*.aab
       - android/app/build/outputs/**/mapping.txt
 
-   ios-workflow:
+  ios-workflow:
     name: PickDuo Build iOS & TestFlight
     max_build_duration: 60
     instance_type: mac_mini_m1
