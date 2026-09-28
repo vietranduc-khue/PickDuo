@@ -1,6 +1,6 @@
 workflows:
-  default-workflow:
-    name: Build Android and iOS (PickDuo Official)
+  android-workflow:
+    name: PickDuo Build Android
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
@@ -60,12 +60,41 @@ workflows:
           find . -type f -name "*.aab" -print
 
           exit $GRADLE_EXIT
-      - name: Build iOS App for Testing
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          flutter build ios --release --no-codesign
     artifacts:
       - android/app/build/outputs/**/*.aab
       - android/app/build/outputs/**/mapping.txt
-      - build/ios/iphoneos/*.app
+
+  ios-workflow:
+    name: PickDuo Build iOS & TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    integrations:
+      app_store_connect: vthypercasualgames
+    environment:
+      groups:
+        - apple_credentials
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.vthypercasualgames.pickduo
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Set up iOS code signing
+        script: |
+          xcode-project use-profiles
+      - name: Fetch Dependencies
+        script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+          flutter pub get
+      - name: Build Flutter IPA for iOS
+        script: |
+          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
+          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+          flutter build ipa --release --export-method=app-store
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
