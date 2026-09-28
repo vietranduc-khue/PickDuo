@@ -75,7 +75,7 @@ workflows:
         - apple_credentials
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.vthypercasualgames.pickduo
+        bundle_identifier: PickDuo - com.vthypercasualgames.pickduo
       flutter: stable
       xcode: latest
     scripts:
