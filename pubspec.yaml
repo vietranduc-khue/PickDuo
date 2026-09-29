@@ -1,7 +1,7 @@
 name: pick_duo
 description: A sorting game with physics-based seesaw mechanics built using Flame and Forge2D.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
