@@ -3,6 +3,7 @@ workflows:
     name: PickDuo Build Android
     max_build_duration: 60
     instance_type: mac_mini_m1
+
     environment:
       groups:
         - pickduo_keystore
@@ -34,39 +35,41 @@ workflows:
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+
           flutter pub get
 
-      - name: Diagnose and Build Android AAB
+      - name: Build Android AAB
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
 
-          echo "===== FLUTTER ====="
+          echo "===== FLUTTER VERSION ====="
           flutter --version
 
-          echo "===== JAVA ====="
-          java -version
+          echo "===== PUBSPEC VERSION ====="
+          grep "^version:" pubspec.yaml
 
-          echo "===== GRADLE ====="
+          echo "===== BUILD ANDROID AAB ====="
+
           cd android
-          ./gradlew --version
 
-          echo "===== BUILD ====="
-          set +e
-          ./gradlew bundleRelease --stacktrace --info
-          GRADLE_EXIT=$?
+          ./gradlew bundleRelease \
+            -Pflutter.versionName=1.0.0 \
+            -Pflutter.versionCode=2 \
+            --stacktrace
 
           cd ..
 
-          echo "===== GRADLE EXIT CODE: $GRADLE_EXIT ====="
           echo "===== AAB FILES ====="
           find . -type f -name "*.aab" -print
 
-          exit $GRADLE_EXIT
+          echo "===== VERIFY AAB SIGNING CERTIFICATE ====="
+          keytool -printcert -jarfile android/app/build/outputs/bundle/release/app-release.aab
 
     artifacts:
-      - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/bundle/release/app-release.aab
       - android/app/build/outputs/**/mapping.txt
+
 
   ios-workflow:
     name: PickDuo Build iOS & TestFlight
@@ -94,12 +97,14 @@ workflows:
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+
           flutter pub get
 
       - name: Build Flutter IPA for iOS
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
+
           flutter build ipa --release --export-options-plist=$HOME/export_options.plist
 
     artifacts:
