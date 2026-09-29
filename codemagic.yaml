@@ -51,20 +51,28 @@ workflows:
 
           echo "===== BUILD ANDROID AAB ====="
 
-          cd android
+          set +e
+          flutter build appbundle --release --build-name=1.0.0 --build-number=2
+          FLUTTER_EXIT=$?
+          set -e
 
-          ./gradlew bundleRelease \
-            -Pflutter.versionName=1.0.0 \
-            -Pflutter.versionCode=2 \
-            --stacktrace
-
-          cd ..
+          echo "===== FLUTTER EXIT CODE: $FLUTTER_EXIT ====="
 
           echo "===== AAB FILES ====="
           find . -type f -name "*.aab" -print
 
+          if [ ! -f "android/app/build/outputs/bundle/release/app-release.aab" ]; then
+            echo "ERROR: android/app/build/outputs/bundle/release/app-release.aab was not generated"
+            exit 1
+          fi
+
+          echo "===== AAB FOUND SUCCESSFULLY ====="
+          ls -lh android/app/build/outputs/bundle/release/app-release.aab
+
           echo "===== VERIFY AAB SIGNING CERTIFICATE ====="
           keytool -printcert -jarfile android/app/build/outputs/bundle/release/app-release.aab
+
+          echo "===== ANDROID AAB BUILD COMPLETED ====="
 
     artifacts:
       - android/app/build/outputs/bundle/release/app-release.aab
