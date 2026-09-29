@@ -1,5 +1,6 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart' hide Wallet;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart'; 
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
@@ -11,7 +12,9 @@ import 'package:games_services/games_services.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  BrowserContextMenu.disableContextMenu(); 
+  if (kIsWeb) {
+    BrowserContextMenu.disableContextMenu();
+  }
 
   runApp(const GameApp());
 }

@@ -1,4 +1,4 @@
-package com.example.pick_duo
+﻿package com.vthypercasual.pickduo
 
 import io.flutter.embedding.android.FlutterActivity
 
