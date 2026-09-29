@@ -52,7 +52,7 @@ workflows:
           echo "===== BUILD ANDROID AAB ====="
 
           set +e
-          flutter build appbundle --release --build-name=1.0.0 --build-number=2
+          flutter build appbundle --release --build-name=1.0.0 --build-number=3
           FLUTTER_EXIT=$?
           set -e
 
