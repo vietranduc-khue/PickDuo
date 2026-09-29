@@ -96,12 +96,6 @@ workflows:
           if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
           flutter pub get
 
-      - name: Install CocoaPods
-        script: |
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
-          if [ -n "$PROJECT_ROOT" ]; then cd "$PROJECT_ROOT"; fi
-          cd ios && pod install
-
       - name: Build Flutter IPA for iOS
         script: |
           PROJECT_ROOT=$(find . -name "pubspec.yaml" -exec dirname {} \; | head -n 1)
